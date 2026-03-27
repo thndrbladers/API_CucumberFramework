@@ -6,7 +6,7 @@ Feature: Posts API - POST Operations
 
   @smoke @post
   Scenario: Create a new post with valid data
-    Given I set up the API client
+    Given I set up the post API client
     And I prepare a post request with title "Test Post" and body "This is a test post body"
     When I send a POST request to create a post
     Then the response status code should be 201
@@ -16,7 +16,7 @@ Feature: Posts API - POST Operations
 
   @post
   Scenario: Create a post with special characters in title
-    Given I set up the API client
+    Given I set up the post API client
     And I prepare a post request with title "Café & Résumé — Test!" and body "Special chars body"
     When I send a POST request to create a post
     Then the response status code should be 201
@@ -24,7 +24,7 @@ Feature: Posts API - POST Operations
 
   @post @datadriven
   Scenario: Create posts from Excel test data
-    Given I set up the API client
+    Given I set up the post API client
     And I load post test data from Excel file "testdata/posts.xlsx" sheet "CreatePosts" row 0
     When I send a POST request to create a post
     Then the response status code should be 201

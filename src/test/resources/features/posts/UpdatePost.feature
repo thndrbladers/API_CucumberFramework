@@ -6,7 +6,7 @@ Feature: Posts API - PUT/PATCH Update Operations
 
   @smoke @put
   Scenario: Update a post with PUT request
-    Given I set up the API client
+    Given I set up the post API client
     And I prepare a post request with title "Updated Title" and body "Updated body content"
     When I send a PUT request to update post with ID 1
     Then the response status code should be 200
@@ -15,7 +15,7 @@ Feature: Posts API - PUT/PATCH Update Operations
 
   @patch
   Scenario: Partially update a post with PATCH request
-    Given I set up the API client
+    Given I set up the post API client
     And I prepare a post request with title "Patched Title" and body "Patched body"
     When I send a PATCH request to update post with ID 1
     Then the response status code should be 200

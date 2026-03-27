@@ -7,7 +7,7 @@ Feature: Posts API - End-to-End CRUD Flow
   @smoke
   Scenario: Complete post lifecycle - Create, Read, Update, Delete
     # CREATE
-    Given I set up the API client
+    Given I set up the post API client
     And I prepare a post request with title "E2E Test Post" and body "E2E test body content"
     When I send a POST request to create a post
     Then the response status code should be 201

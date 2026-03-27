@@ -16,15 +16,21 @@ API_CucumberFramework/
 ├── src/main/java/com/api/automation/       ← Framework core (reusable, not test-specific)
 │   ├── clients/
 │   │   ├── ApiClient.java                  ← Generic RestAssured wrapper
-│   │   └── PostApiClient.java             ← Domain client for Posts resource
+│   │   ├── PostApiClient.java             ← Domain client for Posts
+│   │   ├── CommentApiClient.java          ← Domain client for Comments
+│   │   └── UserApiClient.java            ← Domain client for Users
 │   ├── config/
 │   │   └── ConfigManager.java             ← Singleton config loader
 │   ├── payloads/
 │   │   ├── request/
-│   │   │   └── PostRequest.java           ← Request body POJO
+│   │   │   ├── PostRequest.java           ← Post request POJO
+│   │   │   ├── CommentRequest.java        ← Comment request POJO
+│   │   │   └── UserRequest.java           ← User request POJO
 │   │   └── response/
-│   │       ├── PostResponse.java          ← Single post response POJO
-│   │       └── PostListResponse.java      ← List deserialization helper
+│   │       ├── PostResponse.java          ← Post response POJO
+│   │       ├── PostListResponse.java      ← List deserialization helper
+│   │       ├── CommentResponse.java       ← Comment response POJO
+│   │       └── UserResponse.java          ← User response POJO
 │   └── utils/
 │       ├── JsonUtils.java                 ← Jackson ObjectMapper wrapper
 │       ├── ResponseValidator.java         ← Centralized assertions
@@ -38,7 +44,10 @@ API_CucumberFramework/
 │   │   ├── TestRunner.java                ← Main runner (all tests)
 │   │   └── SmokeTestRunner.java           ← Smoke-only runner (@smoke)
 │   ├── stepdefinitions/
-│   │   └── PostStepDefinitions.java       ← Step defs for Posts API
+│   │   ├── CommonStepDefinitions.java     ← Shared assertions (status, content-type)
+│   │   ├── PostStepDefinitions.java       ← Step defs for Posts API
+│   │   ├── CommentStepDefinitions.java    ← Step defs for Comments API
+│   │   └── UserStepDefinitions.java       ← Step defs for Users API
 │   └── testdata/
 │       └── TestDataGenerator.java         ← Generates Excel test data
 │
@@ -48,11 +57,22 @@ API_CucumberFramework/
     │   ├── qa.properties
     │   └── prod.properties
     ├── features/
-    │   ├── GetPosts.feature               ← 3 scenarios
-    │   ├── CreatePost.feature             ← 3 scenarios (incl. data-driven)
-    │   ├── UpdatePost.feature             ← 2 scenarios (PUT + PATCH)
-    │   ├── DeletePost.feature             ← 2 scenarios
-    │   └── E2EPostFlow.feature            ← 1 full CRUD lifecycle
+    │   ├── posts/                          ← Posts resource (11 scenarios)
+    │   │   ├── GetPosts.feature
+    │   │   ├── CreatePost.feature
+    │   │   ├── UpdatePost.feature
+    │   │   ├── DeletePost.feature
+    │   │   └── E2EPostFlow.feature
+    │   ├── comments/                       ← Comments resource (7 scenarios)
+    │   │   ├── GetComments.feature
+    │   │   ├── CreateComment.feature
+    │   │   └── DeleteComment.feature
+    │   ├── users/                          ← Users resource (6 scenarios)
+    │   │   ├── GetUsers.feature
+    │   │   ├── CreateAndUpdateUsers.feature
+    │   │   └── DeleteUser.feature
+    │   └── e2e/                            ← Cross-resource E2E (1 scenario)
+    │       └── CrossResourceFlow.feature
     ├── testdata/
     │   └── posts.xlsx
     ├── cucumber.properties
@@ -64,15 +84,15 @@ API_CucumberFramework/
 ## How the Layers Connect
 
 ```
-Feature Files (.feature)         ← WHAT to test (plain English)
+Feature Files (.feature)                ← WHAT to test (plain English)
         │
-Step Definitions                 ← GLUE — maps English to Java method calls
+Step Definitions (per resource)         ← GLUE — maps English to Java method calls
         │
-Domain Client (PostApiClient)   ← HOW to call the API for a specific resource
+Domain Clients (Post/Comment/User)      ← HOW to call the API for a specific resource
         │
-Generic Client (ApiClient)      ← HOW to make any HTTP call (RestAssured)
+Generic Client (ApiClient)             ← HOW to make any HTTP call (RestAssured)
         │
-Config (ConfigManager)           ← WHERE to send requests (base URL, timeouts)
+Config (ConfigManager)                  ← WHERE to send requests (base URL, timeouts)
 ```
 
 Each layer only talks to the one directly below it. This is the key to keeping things maintainable.
@@ -86,10 +106,12 @@ Each layer only talks to the one directly below it. This is the key to keeping t
 **What:** Classes that make HTTP calls.
 
 - **`ApiClient.java`** — A generic wrapper around RestAssured. Provides raw `get()`, `post()`, `put()`, `patch()`, `delete()` methods. Knows nothing about specific endpoints.
-- **`PostApiClient.java`** — A domain-specific client for the **Posts** resource. Contains methods like `createPost()`, `getPostById()`, `updatePost()`, `deletePost()`.
+- **`PostApiClient.java`** — Domain client for `/posts`. Methods: `createPost()`, `getPostById()`, `updatePost()`, etc.
+- **`CommentApiClient.java`** — Domain client for `/comments`. Includes `getCommentsByPostId()` for filtered queries.
+- **`UserApiClient.java`** — Domain client for `/users`. Full CRUD operations.
 
 **Why organized this way:**
-- **One domain client per API resource** (Posts, Comments, Users, etc.). All CRUD methods for that resource live in one class.
+- **One domain client per API resource.** All CRUD methods for that resource live in one class.
 - When your API adds a new resource (e.g., Orders), you create `OrderApiClient.java` — nothing else changes.
 - Step definitions never build HTTP requests directly. They just call `postApiClient.createPost(request)`.
 
@@ -118,10 +140,14 @@ Each layer only talks to the one directly below it. This is the key to keeping t
 ```
 payloads/
 ├── request/
-│   └── PostRequest.java       ← { "title": "...", "body": "...", "userId": 1 }
+│   ├── PostRequest.java       ← { "title": "...", "body": "...", "userId": 1 }
+│   ├── CommentRequest.java    ← { "postId": 1, "name": "...", "email": "...", "body": "..." }
+│   └── UserRequest.java       ← { "name": "...", "username": "...", "email": "..." }
 └── response/
-    ├── PostResponse.java      ← { "id": 101, "title": "...", "body": "...", "userId": 1 }
-    └── PostListResponse.java  ← Helps deserialize a list of posts
+    ├── PostResponse.java      ← Post response fields
+    ├── PostListResponse.java  ← List deserialization helper
+    ├── CommentResponse.java   ← Comment response fields
+    └── UserResponse.java      ← User response fields
 ```
 
 **Why separated into request/ and response/:**
@@ -156,18 +182,21 @@ payloads/
 
 **How they're organized — by CRUD operation:**
 
-| File | Covers |
-|------|--------|
-| `GetPosts.feature` | GET all posts, GET by ID, GET non-existent (404) |
-| `CreatePost.feature` | POST valid post, POST with special chars, POST from Excel data |
-| `UpdatePost.feature` | PUT (full update), PATCH (partial update) |
-| `DeletePost.feature` | DELETE scenarios |
-| `E2EPostFlow.feature` | Full lifecycle: Create → Read → Update → Delete |
+**Feature files are organized by resource in subfolders:**
 
-**Why one feature file per operation (not one giant file):**
-- Easy to find tests — "where's the create test?" → `CreatePost.feature`
-- You can run just one file: `mvn test -Dcucumber.features="src/test/resources/features/CreatePost.feature"`
-- Tags like `@smoke`, `@regression`, `@post` let you slice and dice test execution further
+| Folder | Files | Scenarios |
+|--------|-------|-----------|
+| `posts/` | GetPosts, CreatePost, UpdatePost, DeletePost, E2EPostFlow | 11 |
+| `comments/` | GetComments, CreateComment, DeleteComment | 7 |
+| `users/` | GetUsers, CreateAndUpdateUsers, DeleteUser | 6 |
+| `e2e/` | CrossResourceFlow (User → Post → Comment) | 1 |
+
+**Total: 25 scenarios across 3 resources + 1 cross-resource E2E flow**
+
+**Why subfolders per resource:**
+- Easy to find tests — "where are the Comment tests?" → `features/comments/`
+- You can run just one resource: `mvn test -Dcucumber.features="src/test/resources/features/comments"`
+- Tags like `@smoke`, `@regression`, `@comments`, `@users` let you slice execution further
 
 ---
 
@@ -176,8 +205,10 @@ payloads/
 **What:** Java methods annotated with `@Given`, `@When`, `@Then` that map to Gherkin steps.
 
 **How they're organized — by resource/domain:**
-- `PostStepDefinitions.java` handles ALL steps related to the **Posts** resource.
-- If you add a Comments resource, you'd create `CommentStepDefinitions.java`.
+- `CommonStepDefinitions.java` — Shared assertions used by all resources (status code, content type, field-not-null checks).
+- `PostStepDefinitions.java` — All steps for the **Posts** resource.
+- `CommentStepDefinitions.java` — All steps for the **Comments** resource.
+- `UserStepDefinitions.java` — All steps for the **Users** resource.
 
 **Why by domain, not by feature file:**
 - Multiple feature files reuse the same steps. "I send a GET request to /posts" appears in `GetPosts.feature`, `E2EPostFlow.feature`, etc.
@@ -288,13 +319,13 @@ mvn clean test -Dcucumber.features="src/test/resources/features/CreatePost.featu
 
 ---
 
-## Adding a New API Resource (e.g., Comments)
+## Adding a New API Resource (e.g., Albums)
 
-1. **POJOs** → Create `CommentRequest.java` and `CommentResponse.java` in `payloads/`
-2. **Client** → Create `CommentApiClient.java` in `clients/` with all CRUD methods for `/comments`
-3. **Feature files** → Create `GetComments.feature`, `CreateComment.feature`, etc.
-4. **Step definitions** → Create `CommentStepDefinitions.java` — one class, all Comment steps
-5. **Done.** Nothing else changes. Runners auto-discover new features and step defs.
+1. **POJOs** → Create `AlbumRequest.java` and `AlbumResponse.java` in `payloads/`
+2. **Client** → Create `AlbumApiClient.java` in `clients/` with all CRUD methods for `/albums`
+3. **Feature folder** → Create `features/albums/` with `GetAlbums.feature`, `CreateAlbum.feature`, etc.
+4. **Step definitions** → Create `AlbumStepDefinitions.java` — one class, all Album steps
+5. **Done.** Nothing else changes. Runners auto-discover new features and step defs via recursive scanning.
 
 ---
 

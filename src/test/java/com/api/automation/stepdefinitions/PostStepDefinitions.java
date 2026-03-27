@@ -36,10 +36,10 @@ public class PostStepDefinitions {
 
     // ── Setup ────────────────────────────────────────────────────────────
 
-    @Given("I set up the API client")
-    public void iSetUpTheApiClient() {
+    @Given("I set up the post API client")
+    public void iSetUpThePostApiClient() {
         apiClient = new PostApiClient();
-        LOG.info("API client initialized");
+        LOG.info("Post API client initialized");
     }
 
     // ── Request Preparation ──────────────────────────────────────────────
@@ -109,11 +109,6 @@ public class PostStepDefinitions {
 
     // ── Response Assertions ──────────────────────────────────────────────
 
-    @Then("the response status code should be {int}")
-    public void theResponseStatusCodeShouldBe(int expectedStatusCode) {
-        ResponseValidator.assertStatusCode(ScenarioContext.getResponse(), expectedStatusCode);
-    }
-
     @And("the response should contain a list of posts")
     public void theResponseShouldContainAListOfPosts() {
         Response response = ScenarioContext.getResponse();
@@ -130,11 +125,6 @@ public class PostStepDefinitions {
                 ScenarioContext.getResponse(), "id", String.valueOf(expectedPostId));
     }
 
-    @And("the response should contain field {string} with a non-null value")
-    public void theResponseShouldContainFieldWithNonNullValue(String jsonPath) {
-        ResponseValidator.assertFieldNotNull(ScenarioContext.getResponse(), jsonPath);
-    }
-
     @And("the response should contain the title {string}")
     public void theResponseShouldContainTheTitle(String expectedTitle) {
         ResponseValidator.assertFieldEquals(ScenarioContext.getResponse(), "title", expectedTitle);
@@ -143,16 +133,6 @@ public class PostStepDefinitions {
     @And("the response should contain the body {string}")
     public void theResponseShouldContainTheBody(String expectedBody) {
         ResponseValidator.assertFieldEquals(ScenarioContext.getResponse(), "body", expectedBody);
-    }
-
-    @And("the response should contain a non-null {string}")
-    public void theResponseShouldContainNonNull(String fieldName) {
-        ResponseValidator.assertFieldNotNull(ScenarioContext.getResponse(), fieldName);
-    }
-
-    @And("the response content type should contain {string}")
-    public void theResponseContentTypeShouldContain(String expectedContentType) {
-        ResponseValidator.assertContentType(ScenarioContext.getResponse(), expectedContentType);
     }
 
     @And("I save the created post ID")

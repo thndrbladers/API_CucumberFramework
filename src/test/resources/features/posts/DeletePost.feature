@@ -6,12 +6,12 @@ Feature: Posts API - DELETE Operations
 
   @smoke @delete
   Scenario: Delete an existing post
-    Given I set up the API client
+    Given I set up the post API client
     When I send a DELETE request to delete post with ID 1
     Then the response status code should be 200
 
   @delete
   Scenario: Delete another post
-    Given I set up the API client
+    Given I set up the post API client
     When I send a DELETE request to delete post with ID 50
     Then the response status code should be 200
