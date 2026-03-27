@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<extentreports>
+    <configuration>
+        <theme>DARK</theme>
+        <encoding>UTF-8</encoding>
+        <protocol>HTTPS</protocol>
+        <documentTitle>API Automation Report</documentTitle>
+        <reportName>API Cucumber Framework - Test Execution Report</reportName>
+        <timestampFormat>MMM dd, yyyy HH:mm:ss</timestampFormat>
+    </configuration>
+</extentreports>
