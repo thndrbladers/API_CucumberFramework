@@ -308,3 +308,78 @@ mvn clean test -Dcucumber.features="src/test/resources/features/CreateUser.featu
 | **No hardcoded values** | URLs in config, test data in Excel/Gherkin, assertions via utility methods |
 | **Thread-safe state** | `ScenarioContext` uses ThreadLocal for parallel execution |
 | **Separation of concerns** | Feature files = what, Step defs = glue, Clients = how, Config = where |
+- **`users.xlsx`** (in `src/test/resources/testdata/`) — Excel file with sheets of test data
+
+**How it works:** `ExcelReader` reads the Excel file → returns rows as maps → step definitions loop through rows and call the API for each.
+
+**Why Excel instead of hardcoding in feature files:** When you have 50+ test data combinations, putting them all in Gherkin `Examples:` tables makes feature files unreadable. Excel keeps test data external and manageable.
+
+---
+
+## How to Run
+
+### Prerequisites
+- Java 17+
+- Maven 3.8+
+
+### Generate Test Data (first time only)
+```bash
+mvn test-compile exec:java -Dexec.mainClass="com.api.automation.testdata.TestDataGenerator" -Dexec.classpathScope=test
+```
+
+### Run All Tests
+```bash
+mvn clean test
+```
+
+### Run by Environment
+```bash
+mvn clean test -Denv=dev
+mvn clean test -Denv=qa           # default
+mvn clean test -Denv=prod
+```
+
+### Run by Tags
+```bash
+mvn clean test -Dcucumber.filter.tags="@smoke"
+mvn clean test -Dcucumber.filter.tags="@regression"
+mvn clean test -Dcucumber.filter.tags="@smoke and not @delete"
+```
+
+### Run Specific Feature
+```bash
+mvn clean test -Dcucumber.features="src/test/resources/features/CreateUser.feature"
+```
+
+---
+
+## Reports
+
+| Report | Location |
+|--------|----------|
+| Cucumber HTML | `target/cucumber-reports/cucumber.html` |
+| Cucumber JSON | `target/cucumber-reports/cucumber.json` |
+| Execution Logs | `target/logs/test-execution.log` |
+
+---
+
+## Adding a New API Resource (e.g., Comments)
+
+1. **POJOs** → Create `CommentRequest.java` and `CommentResponse.java` in `payloads/`
+2. **Client** → Create `CommentApiClient.java` in `clients/` with all CRUD methods for `/comments`
+3. **Feature files** → Create `GetComments.feature`, `CreateComment.feature`, etc.
+4. **Step definitions** → Create `CommentStepDefinitions.java` — one class, all Comment steps
+5. **Done.** Nothing else changes. Runners auto-discover new features and step defs.
+
+---
+
+## Key Principles Summary
+
+| Principle | How It's Applied |
+|-----------|-----------------|
+| **One domain client per resource** | All CRUD methods for a resource in one class |
+| **One step def class per resource** | All step methods for a resource in one class, reused across features |
+| **Step defs only orchestrate** | They call clients and store results — no HTTP logic, no business logic |
+| **No hardcoded values** | URLs in config, test data in Excel/Gherkin, assertions via utility methods |
+| **Thread-safe state** | `ScenarioContext` uses ThreadLocal for parallel execution |
+| **Separation of concerns** | Feature files = what, Step defs = glue, Clients = how, Config = where |
