@@ -1,9 +1,9 @@
 package com.api.automation.stepdefinitions;
 
-import com.api.automation.clients.UserApiClient;
-import com.api.automation.payloads.request.UserRequest;
-import com.api.automation.payloads.response.UserListResponse;
-import com.api.automation.payloads.response.UserResponse;
+import com.api.automation.clients.PostApiClient;
+import com.api.automation.payloads.request.PostRequest;
+import com.api.automation.payloads.response.PostListResponse;
+import com.api.automation.payloads.response.PostResponse;
 import com.api.automation.utils.*;
 import io.cucumber.java.en.And;
 import io.cucumber.java.en.Given;
@@ -23,12 +23,12 @@ import static org.junit.Assert.*;
  * Uses ScenarioContext (thread-local) to share state between steps,
  * making this safe for parallel execution.
  */
-public class UserStepDefinitions {
+public class PostStepDefinitions {
 
-    private static final Logger LOG = LogManager.getLogger(UserStepDefinitions.class);
+    private static final Logger LOG = LogManager.getLogger(PostStepDefinitions.class);
 
-    private UserApiClient apiClient;
-    private UserRequest postRequest;
+    private PostApiClient apiClient;
+    private PostRequest postRequest;
     private Integer createdPostId;
 
     // Data-driven test data loaded from Excel
@@ -38,7 +38,7 @@ public class UserStepDefinitions {
 
     @Given("I set up the API client")
     public void iSetUpTheApiClient() {
-        apiClient = new UserApiClient();
+        apiClient = new PostApiClient();
         LOG.info("API client initialized");
     }
 
@@ -46,7 +46,7 @@ public class UserStepDefinitions {
 
     @Given("I prepare a post request with title {string} and body {string}")
     public void iPreparePostRequest(String title, String body) {
-        postRequest = new UserRequest(title, body, 1);
+        postRequest = new PostRequest(title, body, 1);
         ScenarioContext.setRequestBody(postRequest);
         LOG.info("Prepared request: {}", postRequest);
     }
@@ -56,7 +56,7 @@ public class UserStepDefinitions {
         testData = ExcelReader.readRow(filePath, sheetName, rowIndex);
         String title = testData.get("title");
         String body = testData.get("body");
-        postRequest = new UserRequest(title, body, 1);
+        postRequest = new PostRequest(title, body, 1);
         ScenarioContext.setRequestBody(postRequest);
         LOG.info("Loaded test data from Excel — title: {}, body: {}", title, body);
     }
@@ -118,7 +118,7 @@ public class UserStepDefinitions {
     public void theResponseShouldContainAListOfPosts() {
         Response response = ScenarioContext.getResponse();
         // JSONPlaceholder returns a flat JSON array
-        List<UserResponse> posts = UserListResponse.fromResponse(response);
+        List<PostResponse> posts = PostListResponse.fromResponse(response);
         assertNotNull("Posts list should not be null", posts);
         assertFalse("Posts list should not be empty", posts.isEmpty());
         LOG.info("Returned {} posts", posts.size());
@@ -158,7 +158,7 @@ public class UserStepDefinitions {
     @And("I save the created post ID")
     public void iSaveTheCreatedPostId() {
         Response response = ScenarioContext.getResponse();
-        UserResponse postResponse = JsonUtils.fromResponse(response, UserResponse.class);
+        PostResponse postResponse = JsonUtils.fromResponse(response, PostResponse.class);
         createdPostId = postResponse.getId();
         assertNotNull("Created post ID should not be null", createdPostId);
         LOG.info("Saved created post ID: {}", createdPostId);

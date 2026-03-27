@@ -9,14 +9,14 @@ import org.apache.logging.log4j.Logger;
  * Encapsulates endpoints and provides typed methods for post operations.
  * This pattern keeps endpoint URLs out of step definitions.
  */
-public class UserApiClient {
+public class PostApiClient {
 
-    private static final Logger LOG = LogManager.getLogger(UserApiClient.class);
+    private static final Logger LOG = LogManager.getLogger(PostApiClient.class);
     private static final String POSTS_ENDPOINT = "/posts";
 
     private final ApiClient apiClient;
 
-    public UserApiClient() {
+    public PostApiClient() {
         this.apiClient = new ApiClient();
     }
 

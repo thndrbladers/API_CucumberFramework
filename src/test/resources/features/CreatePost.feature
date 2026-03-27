@@ -25,7 +25,7 @@ Feature: Posts API - POST Operations
   @post @datadriven
   Scenario: Create posts from Excel test data
     Given I set up the API client
-    And I load post test data from Excel file "testdata/users.xlsx" sheet "CreateUsers" row 0
+    And I load post test data from Excel file "testdata/posts.xlsx" sheet "CreatePosts" row 0
     When I send a POST request to create a post
     Then the response status code should be 201
     And the response should contain the title from test data

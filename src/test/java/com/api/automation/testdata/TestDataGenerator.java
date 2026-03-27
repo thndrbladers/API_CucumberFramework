@@ -10,7 +10,7 @@ import java.nio.file.Path;
 
 /**
  * One-time utility to generate the test data Excel file.
- * Run this class's main method to create src/test/resources/testdata/users.xlsx.
+ * Run this class's main method to create src/test/resources/testdata/posts.xlsx.
  *
  * Usage: Right-click → Run As → Java Application
  */
@@ -22,8 +22,8 @@ public class TestDataGenerator {
 
         Workbook workbook = new XSSFWorkbook();
 
-        // ── Sheet: CreateUsers ──────────────────────────────────────────
-        Sheet createSheet = workbook.createSheet("CreateUsers");
+        // ── Sheet: CreatePosts ──────────────────────────────────────────
+        Sheet createSheet = workbook.createSheet("CreatePosts");
         Row header = createSheet.createRow(0);
         header.createCell(0).setCellValue("title");
         header.createCell(1).setCellValue("body");
@@ -41,8 +41,8 @@ public class TestDataGenerator {
             row.createCell(1).setCellValue(createData[i][1]);
         }
 
-        // ── Sheet: UpdateUsers ──────────────────────────────────────────
-        Sheet updateSheet = workbook.createSheet("UpdateUsers");
+        // ── Sheet: UpdatePosts ──────────────────────────────────────────
+        Sheet updateSheet = workbook.createSheet("UpdatePosts");
         Row updateHeader = updateSheet.createRow(0);
         updateHeader.createCell(0).setCellValue("postId");
         updateHeader.createCell(1).setCellValue("title");
@@ -68,7 +68,7 @@ public class TestDataGenerator {
         }
 
         // Write to file
-        Path filePath = dir.resolve("users.xlsx");
+        Path filePath = dir.resolve("posts.xlsx");
         try (FileOutputStream fos = new FileOutputStream(filePath.toFile())) {
             workbook.write(fos);
         }

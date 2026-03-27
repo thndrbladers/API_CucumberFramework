@@ -8,16 +8,16 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  * useful for PATCH operations where partial updates are needed.
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class UserRequest {
+public class PostRequest {
 
     private String title;
     private String body;
     private Integer userId;
 
-    public UserRequest() {
+    public PostRequest() {
     }
 
-    public UserRequest(String title, String body, int userId) {
+    public PostRequest(String title, String body, int userId) {
         this.title = title;
         this.body = body;
         this.userId = userId;
@@ -49,6 +49,6 @@ public class UserRequest {
 
     @Override
     public String toString() {
-        return "UserRequest{title='" + title + "', body='" + body + "', userId=" + userId + "}";
+        return "PostRequest{title='" + title + "', body='" + body + "', userId=" + userId + "}";
     }
 }

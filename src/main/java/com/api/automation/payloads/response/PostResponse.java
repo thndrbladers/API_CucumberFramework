@@ -8,7 +8,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
  * JsonIgnoreProperties(ignoreUnknown) ensures forward compatibility.
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class UserResponse {
+public class PostResponse {
 
     private Integer id;
     private String title;
@@ -49,6 +49,6 @@ public class UserResponse {
 
     @Override
     public String toString() {
-        return "UserResponse{id=" + id + ", title='" + title + "', body='" + body + "', userId=" + userId + "}";
+        return "PostResponse{id=" + id + ", title='" + title + "', body='" + body + "', userId=" + userId + "}";
     }
 }

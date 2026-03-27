@@ -16,15 +16,15 @@ API_CucumberFramework/
 ├── src/main/java/com/api/automation/       ← Framework core (reusable, not test-specific)
 │   ├── clients/
 │   │   ├── ApiClient.java                  ← Generic RestAssured wrapper
-│   │   └── UserApiClient.java             ← Domain client for Posts resource
+│   │   └── PostApiClient.java             ← Domain client for Posts resource
 │   ├── config/
 │   │   └── ConfigManager.java             ← Singleton config loader
 │   ├── payloads/
 │   │   ├── request/
-│   │   │   └── UserRequest.java           ← Request body POJO
+│   │   │   └── PostRequest.java           ← Request body POJO
 │   │   └── response/
-│   │       ├── UserResponse.java          ← Single post response POJO
-│   │       └── UserListResponse.java      ← List deserialization helper
+│   │       ├── PostResponse.java          ← Single post response POJO
+│   │       └── PostListResponse.java      ← List deserialization helper
 │   └── utils/
 │       ├── JsonUtils.java                 ← Jackson ObjectMapper wrapper
 │       ├── ResponseValidator.java         ← Centralized assertions
@@ -38,7 +38,7 @@ API_CucumberFramework/
 │   │   ├── TestRunner.java                ← Main runner (all tests)
 │   │   └── SmokeTestRunner.java           ← Smoke-only runner (@smoke)
 │   ├── stepdefinitions/
-│   │   └── UserStepDefinitions.java       ← Step defs for Posts API
+│   │   └── PostStepDefinitions.java       ← Step defs for Posts API
 │   └── testdata/
 │       └── TestDataGenerator.java         ← Generates Excel test data
 │
@@ -48,13 +48,13 @@ API_CucumberFramework/
     │   ├── qa.properties
     │   └── prod.properties
     ├── features/
-    │   ├── GetUsers.feature               ← 3 scenarios
-    │   ├── CreateUser.feature             ← 3 scenarios (incl. data-driven)
-    │   ├── UpdateUser.feature             ← 2 scenarios (PUT + PATCH)
-    │   ├── DeleteUser.feature             ← 2 scenarios
-    │   └── E2EUserFlow.feature            ← 1 full CRUD lifecycle
+    │   ├── GetPosts.feature               ← 3 scenarios
+    │   ├── CreatePost.feature             ← 3 scenarios (incl. data-driven)
+    │   ├── UpdatePost.feature             ← 2 scenarios (PUT + PATCH)
+    │   ├── DeletePost.feature             ← 2 scenarios
+    │   └── E2EPostFlow.feature            ← 1 full CRUD lifecycle
     ├── testdata/
-    │   └── users.xlsx
+    │   └── posts.xlsx
     ├── cucumber.properties
     └── log4j2.xml
 ```
@@ -68,7 +68,7 @@ Feature Files (.feature)         ← WHAT to test (plain English)
         │
 Step Definitions                 ← GLUE — maps English to Java method calls
         │
-Domain Client (UserApiClient)   ← HOW to call the API for a specific resource
+Domain Client (PostApiClient)   ← HOW to call the API for a specific resource
         │
 Generic Client (ApiClient)      ← HOW to make any HTTP call (RestAssured)
         │
@@ -86,12 +86,12 @@ Each layer only talks to the one directly below it. This is the key to keeping t
 **What:** Classes that make HTTP calls.
 
 - **`ApiClient.java`** — A generic wrapper around RestAssured. Provides raw `get()`, `post()`, `put()`, `patch()`, `delete()` methods. Knows nothing about specific endpoints.
-- **`UserApiClient.java`** — A domain-specific client for the **Posts** resource. Contains methods like `createPost()`, `getPostById()`, `updatePost()`, `deletePost()`.
+- **`PostApiClient.java`** — A domain-specific client for the **Posts** resource. Contains methods like `createPost()`, `getPostById()`, `updatePost()`, `deletePost()`.
 
 **Why organized this way:**
 - **One domain client per API resource** (Posts, Comments, Users, etc.). All CRUD methods for that resource live in one class.
 - When your API adds a new resource (e.g., Orders), you create `OrderApiClient.java` — nothing else changes.
-- Step definitions never build HTTP requests directly. They just call `userApiClient.createPost(request)`.
+- Step definitions never build HTTP requests directly. They just call `postApiClient.createPost(request)`.
 
 **Benefit:** If an endpoint URL changes from `/posts` to `/articles`, you fix it in **one place** — the domain client. Every test that creates a post automatically uses the new URL.
 
@@ -118,10 +118,10 @@ Each layer only talks to the one directly below it. This is the key to keeping t
 ```
 payloads/
 ├── request/
-│   └── UserRequest.java       ← { "title": "...", "body": "...", "userId": 1 }
+│   └── PostRequest.java       ← { "title": "...", "body": "...", "userId": 1 }
 └── response/
-    ├── UserResponse.java      ← { "id": 101, "title": "...", "body": "...", "userId": 1 }
-    └── UserListResponse.java  ← Helps deserialize a list of posts
+    ├── PostResponse.java      ← { "id": 101, "title": "...", "body": "...", "userId": 1 }
+    └── PostListResponse.java  ← Helps deserialize a list of posts
 ```
 
 **Why separated into request/ and response/:**
@@ -158,15 +158,15 @@ payloads/
 
 | File | Covers |
 |------|--------|
-| `GetUsers.feature` | GET all posts, GET by ID, GET non-existent (404) |
-| `CreateUser.feature` | POST valid post, POST with special chars, POST from Excel data |
-| `UpdateUser.feature` | PUT (full update), PATCH (partial update) |
-| `DeleteUser.feature` | DELETE scenarios |
-| `E2EUserFlow.feature` | Full lifecycle: Create → Read → Update → Delete |
+| `GetPosts.feature` | GET all posts, GET by ID, GET non-existent (404) |
+| `CreatePost.feature` | POST valid post, POST with special chars, POST from Excel data |
+| `UpdatePost.feature` | PUT (full update), PATCH (partial update) |
+| `DeletePost.feature` | DELETE scenarios |
+| `E2EPostFlow.feature` | Full lifecycle: Create → Read → Update → Delete |
 
 **Why one feature file per operation (not one giant file):**
-- Easy to find tests — "where's the create test?" → `CreateUser.feature`
-- You can run just one file: `mvn test -Dcucumber.features="src/test/resources/features/CreateUser.feature"`
+- Easy to find tests — "where's the create test?" → `CreatePost.feature`
+- You can run just one file: `mvn test -Dcucumber.features="src/test/resources/features/CreatePost.feature"`
 - Tags like `@smoke`, `@regression`, `@post` let you slice and dice test execution further
 
 ---
@@ -176,11 +176,11 @@ payloads/
 **What:** Java methods annotated with `@Given`, `@When`, `@Then` that map to Gherkin steps.
 
 **How they're organized — by resource/domain:**
-- `UserStepDefinitions.java` handles ALL steps related to the **Posts** resource.
+- `PostStepDefinitions.java` handles ALL steps related to the **Posts** resource.
 - If you add a Comments resource, you'd create `CommentStepDefinitions.java`.
 
 **Why by domain, not by feature file:**
-- Multiple feature files reuse the same steps. "I send a GET request to /posts" appears in `GetUsers.feature`, `E2EUserFlow.feature`, etc.
+- Multiple feature files reuse the same steps. "I send a GET request to /posts" appears in `GetPosts.feature`, `E2EPostFlow.feature`, etc.
 - If you made one step def class per feature file, you'd have **duplicate step methods** → Cucumber throws errors.
 - Organizing by domain means each step is defined **once** and reused across all feature files that need it.
 
@@ -189,7 +189,7 @@ payloads/
 @When("I send a POST request to create a post")
 public void createPost() {
     // ✅ Calls the domain client
-    Response response = userApiClient.createPost(request);
+    Response response = postApiClient.createPost(request);
     // ✅ Stores result for later steps
     scenarioContext.setResponse(response);
     // ❌ Does NOT build HTTP requests itself
@@ -232,8 +232,8 @@ public void createPost() {
 
 ### 9. `testdata/` — Data-Driven Testing
 
-- **`TestDataGenerator.java`** (in `src/test`) — Generates `users.xlsx` with test data
-- **`users.xlsx`** (in `src/test/resources/testdata/`) — Excel file with sheets of test data
+- **`TestDataGenerator.java`** (in `src/test`) — Generates `posts.xlsx` with test data
+- **`posts.xlsx`** (in `src/test/resources/testdata/`) — Excel file with sheets of test data
 
 **How it works:** `ExcelReader` reads the Excel file → returns rows as maps → step definitions loop through rows and call the API for each.
 
@@ -273,82 +273,7 @@ mvn clean test -Dcucumber.filter.tags="@smoke and not @delete"
 
 ### Run Specific Feature
 ```bash
-mvn clean test -Dcucumber.features="src/test/resources/features/CreateUser.feature"
-```
-
----
-
-## Reports
-
-| Report | Location |
-|--------|----------|
-| Cucumber HTML | `target/cucumber-reports/cucumber.html` |
-| Cucumber JSON | `target/cucumber-reports/cucumber.json` |
-| Execution Logs | `target/logs/test-execution.log` |
-
----
-
-## Adding a New API Resource (e.g., Comments)
-
-1. **POJOs** → Create `CommentRequest.java` and `CommentResponse.java` in `payloads/`
-2. **Client** → Create `CommentApiClient.java` in `clients/` with all CRUD methods for `/comments`
-3. **Feature files** → Create `GetComments.feature`, `CreateComment.feature`, etc.
-4. **Step definitions** → Create `CommentStepDefinitions.java` — one class, all Comment steps
-5. **Done.** Nothing else changes. Runners auto-discover new features and step defs.
-
----
-
-## Key Principles Summary
-
-| Principle | How It's Applied |
-|-----------|-----------------|
-| **One domain client per resource** | All CRUD methods for a resource in one class |
-| **One step def class per resource** | All step methods for a resource in one class, reused across features |
-| **Step defs only orchestrate** | They call clients and store results — no HTTP logic, no business logic |
-| **No hardcoded values** | URLs in config, test data in Excel/Gherkin, assertions via utility methods |
-| **Thread-safe state** | `ScenarioContext` uses ThreadLocal for parallel execution |
-| **Separation of concerns** | Feature files = what, Step defs = glue, Clients = how, Config = where |
-- **`users.xlsx`** (in `src/test/resources/testdata/`) — Excel file with sheets of test data
-
-**How it works:** `ExcelReader` reads the Excel file → returns rows as maps → step definitions loop through rows and call the API for each.
-
-**Why Excel instead of hardcoding in feature files:** When you have 50+ test data combinations, putting them all in Gherkin `Examples:` tables makes feature files unreadable. Excel keeps test data external and manageable.
-
----
-
-## How to Run
-
-### Prerequisites
-- Java 17+
-- Maven 3.8+
-
-### Generate Test Data (first time only)
-```bash
-mvn test-compile exec:java -Dexec.mainClass="com.api.automation.testdata.TestDataGenerator" -Dexec.classpathScope=test
-```
-
-### Run All Tests
-```bash
-mvn clean test
-```
-
-### Run by Environment
-```bash
-mvn clean test -Denv=dev
-mvn clean test -Denv=qa           # default
-mvn clean test -Denv=prod
-```
-
-### Run by Tags
-```bash
-mvn clean test -Dcucumber.filter.tags="@smoke"
-mvn clean test -Dcucumber.filter.tags="@regression"
-mvn clean test -Dcucumber.filter.tags="@smoke and not @delete"
-```
-
-### Run Specific Feature
-```bash
-mvn clean test -Dcucumber.features="src/test/resources/features/CreateUser.feature"
+mvn clean test -Dcucumber.features="src/test/resources/features/CreatePost.feature"
 ```
 
 ---

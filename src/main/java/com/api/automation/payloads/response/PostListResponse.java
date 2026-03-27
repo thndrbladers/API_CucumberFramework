@@ -11,18 +11,18 @@ import java.util.List;
  * Helper for deserializing a flat JSON array of posts from JSONPlaceholder.
  * JSONPlaceholder returns GET /posts as a top-level array (not wrapped in an object).
  */
-public class UserListResponse {
+public class PostListResponse {
 
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
     /**
-     * Deserializes the response body (JSON array) into a list of UserResponse objects.
+     * Deserializes the response body (JSON array) into a list of PostResponse objects.
      */
-    public static List<UserResponse> fromResponse(Response response) {
+    public static List<PostResponse> fromResponse(Response response) {
         try {
             return MAPPER.readValue(
                     response.getBody().asString(),
-                    new TypeReference<List<UserResponse>>() {}
+                    new TypeReference<List<PostResponse>>() {}
             );
         } catch (Exception e) {
             throw new RuntimeException("Failed to parse posts list response", e);

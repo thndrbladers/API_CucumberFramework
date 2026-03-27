@@ -24,7 +24,7 @@ public final class ExcelReader {
     /**
      * Reads all rows from a given sheet in an Excel file.
      *
-     * @param filePath  path relative to classpath (e.g., "testdata/users.xlsx")
+     * @param filePath  path relative to classpath (e.g., "testdata/posts.xlsx")
      * @param sheetName name of the sheet to read
      * @return list of maps, each map representing a row with header→value pairs
      */
