@@ -3,17 +3,24 @@ package com.api.automation.payloads.response;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 /**
- * POJO for the Post response from JSONPlaceholder.
- * Used for both create (POST → 201) and update (PUT → 200) responses.
- * JsonIgnoreProperties(ignoreUnknown) ensures forward compatibility.
+ * Response POJO for a Post returned by JSONPlaceholder.
+ * Maps from JSON: { "id": 1, "title": "...", "body": "...", "userId": 1 }
+ *
+ * @JsonIgnoreProperties(ignoreUnknown=true) — if the API adds new fields in the future,
+ *   deserialization won't break. Only the fields declared below are mapped.
+ *   BENEFIT: Forward-compatible — API can evolve without breaking existing tests.
+ *   Example: If API adds "createdAt" field tomorrow, this class still works untouched.
+ *
+ * No-arg constructor + setters are used by Jackson for deserialization.
+ * Getters are used by step definitions to read and assert field values.
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class PostResponse {
 
-    private Integer id;
-    private String title;
-    private String body;
-    private Integer userId;
+    private Integer id;         // Server-generated post ID
+    private String title;       // Post title
+    private String body;        // Post content
+    private Integer userId;     // Author's user ID
 
     public Integer getId() {
         return id;

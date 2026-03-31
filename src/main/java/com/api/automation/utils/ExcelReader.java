@@ -10,9 +10,23 @@ import java.io.InputStream;
 import java.util.*;
 
 /**
- * Utility to read test data from Excel (.xlsx) files.
- * Returns data as List<Map<String, String>> where each map represents a row
- * with column headers as keys — compatible with data-driven step definitions.
+ * Reads test data from Excel .xlsx files using Apache POI.
+ * Returns data as List<Map<String, String>> where:
+ *   - Each Map = one row of data
+ *   - Keys = column header names (from row 0)
+ *   - Values = cell values as strings
+ *
+ * WHY Excel instead of hardcoded values: Separates test data from test logic.
+ *   Non-technical team members can add/edit test data in Excel without touching code.
+ *
+ * BENEFIT: Data-driven testing — one Cucumber scenario runs against multiple rows.
+ *   Adding new test cases = adding rows to the Excel sheet; zero code changes.
+ *
+ * Example:
+ *   List<Map<String, String>> rows = ExcelReader.readExcelData("testdata/posts.xlsx", "CreatePosts");
+ *   rows.get(0).get("title")  → "Introduction to Java"
+ *
+ * All methods are static. Private constructor prevents instantiation.
  */
 public final class ExcelReader {
 
@@ -22,11 +36,11 @@ public final class ExcelReader {
     }
 
     /**
-     * Reads all rows from a given sheet in an Excel file.
+     * Reads all data rows from a specific sheet.
      *
-     * @param filePath  path relative to classpath (e.g., "testdata/posts.xlsx")
-     * @param sheetName name of the sheet to read
-     * @return list of maps, each map representing a row with header→value pairs
+     * @param filePath  classpath-relative path (e.g., "testdata/posts.xlsx")
+     * @param sheetName Excel sheet name (e.g., "CreatePosts")
+     * @return list of row maps — e.g., [{"title":"Java", "body":"Intro..."}, {...}]
      */
     public static List<Map<String, String>> readExcelData(String filePath, String sheetName) {
         List<Map<String, String>> data = new ArrayList<>();
@@ -76,7 +90,8 @@ public final class ExcelReader {
     }
 
     /**
-     * Reads a specific row by row index (0-based, excluding header).
+     * Reads a single row by index (0-based, header row excluded).
+     * e.g., readRow("testdata/posts.xlsx", "CreatePosts", 0) returns the first data row.
      */
     public static Map<String, String> readRow(String filePath, String sheetName, int rowIndex) {
         List<Map<String, String>> allData = readExcelData(filePath, sheetName);
@@ -87,6 +102,11 @@ public final class ExcelReader {
         return allData.get(rowIndex);
     }
 
+    /**
+     * Converts any Excel cell to a String regardless of type.
+     * Handles: STRING, NUMERIC (including dates), BOOLEAN, FORMULA.
+     * Numeric integers are returned without decimal (e.g., 1 not 1.0).
+     */
     private static String getCellValueAsString(Cell cell) {
         if (cell == null) return "";
 

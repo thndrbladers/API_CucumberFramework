@@ -16,17 +16,23 @@ import java.util.List;
 import static org.junit.Assert.*;
 
 /**
- * Step definitions for all User API operations (JSONPlaceholder).
+ * Step definitions for all User API operations.
+ * Maps Gherkin steps to Java methods that call UserApiClient.
+ * Shares response data via ScenarioContext (ThreadLocal).
+ *
+ * WHY: Same per-resource pattern as Post/Comment. Adding new user operations
+ *   (e.g., PATCH, filtered search) only modifies this file.
  */
 public class UserStepDefinitions {
 
     private static final Logger LOG = LogManager.getLogger(UserStepDefinitions.class);
 
-    private UserApiClient apiClient;
-    private UserRequest userRequest;
+    private UserApiClient apiClient;       // Domain client — initialized in setup step
+    private UserRequest userRequest;       // Request body — built in preparation step
 
     // ── Setup ────────────────────────────────────────────────────────────
 
+    /** Initializes the UserApiClient. Called at the start of every User scenario. */
     @Given("I set up the user API client")
     public void iSetUpTheUserApiClient() {
         apiClient = new UserApiClient();
@@ -35,6 +41,7 @@ public class UserStepDefinitions {
 
     // ── Request Preparation ──────────────────────────────────────────────
 
+    /** Builds a UserRequest from Gherkin parameters and stores it in ScenarioContext. */
     @Given("I prepare a user request with name {string} username {string} and email {string}")
     public void iPrepareUserRequest(String name, String username, String email) {
         userRequest = new UserRequest(name, username, email);
@@ -44,12 +51,14 @@ public class UserStepDefinitions {
 
     // ── GET Operations ───────────────────────────────────────────────────
 
+    /** Calls GET /users and stores response. */
     @When("I send a GET request to fetch all users")
     public void iSendGetRequestToFetchAllUsers() {
         Response response = apiClient.getUsers();
         ScenarioContext.setResponse(response);
     }
 
+    /** Calls GET /users/{id}. Returns 200 or 404. */
     @When("I send a GET request to fetch user with ID {int}")
     public void iSendGetRequestToFetchUserById(int userId) {
         Response response = apiClient.getUserById(userId);
@@ -58,6 +67,7 @@ public class UserStepDefinitions {
 
     // ── POST Operations ──────────────────────────────────────────────────
 
+    /** Calls POST /users with the prepared UserRequest. Expects 201. */
     @When("I send a POST request to create a user")
     public void iSendPostRequestToCreateUser() {
         Response response = apiClient.createUser(userRequest);
@@ -66,6 +76,7 @@ public class UserStepDefinitions {
 
     // ── PUT Operations ───────────────────────────────────────────────────
 
+    /** Calls PUT /users/{id} with the prepared UserRequest. Full replace. */
     @When("I send a PUT request to update user with ID {int}")
     public void iSendPutRequestToUpdateUser(int userId) {
         Response response = apiClient.updateUser(userId, userRequest);
@@ -74,6 +85,7 @@ public class UserStepDefinitions {
 
     // ── DELETE Operations ────────────────────────────────────────────────
 
+    /** Calls DELETE /users/{id}. Returns 200 with empty body. */
     @When("I send a DELETE request to delete user with ID {int}")
     public void iSendDeleteRequestToDeleteUser(int userId) {
         Response response = apiClient.deleteUser(userId);
@@ -82,6 +94,7 @@ public class UserStepDefinitions {
 
     // ── Response Assertions ──────────────────────────────────────────────
 
+    /** Parses JSON array response and asserts the users list is not empty. */
     @And("the response should contain a list of users")
     public void theResponseShouldContainAListOfUsers() {
         Response response = ScenarioContext.getResponse();
@@ -91,17 +104,20 @@ public class UserStepDefinitions {
         LOG.info("Returned {} users", users.size());
     }
 
+    /** Asserts the response JSON "id" field matches the expected user ID. */
     @And("the response should contain user with ID {int}")
     public void theResponseShouldContainUserWithId(int expectedId) {
         ResponseValidator.assertFieldEquals(
                 ScenarioContext.getResponse(), "id", String.valueOf(expectedId));
     }
 
+    /** Asserts the "name" field in the response matches expected. */
     @And("the response should contain the user name {string}")
     public void theResponseShouldContainTheUserName(String expectedName) {
         ResponseValidator.assertFieldEquals(ScenarioContext.getResponse(), "name", expectedName);
     }
 
+    /** Asserts the "email" field in the response matches expected. */
     @And("the response should contain the user email {string}")
     public void theResponseShouldContainTheUserEmail(String expectedEmail) {
         ResponseValidator.assertFieldEquals(ScenarioContext.getResponse(), "email", expectedEmail);

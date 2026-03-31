@@ -3,16 +3,20 @@ package com.api.automation.payloads.response;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 /**
- * POJO for the Comment response from JSONPlaceholder.
+ * Response POJO for a Comment returned by JSONPlaceholder.
+ * Maps from JSON: { "id": 1, "postId": 1, "name": "...", "email": "...", "body": "..." }
+ *
+ * @JsonIgnoreProperties(ignoreUnknown=true) — safely ignores any extra fields the API may return.
+ *   BENEFIT: Same forward-compatibility as PostResponse — API changes don't break tests.
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class CommentResponse {
 
-    private Integer id;
-    private Integer postId;
-    private String name;
-    private String email;
-    private String body;
+    private Integer id;         // Server-generated comment ID
+    private Integer postId;     // Parent post this comment belongs to
+    private String name;        // Commenter display name
+    private String email;       // Commenter email
+    private String body;        // Comment text content
 
     public Integer getId() {
         return id;

@@ -19,23 +19,29 @@ import java.util.Map;
 import static org.junit.Assert.*;
 
 /**
- * Step definitions for all Post API operations (JSONPlaceholder).
- * Uses ScenarioContext (thread-local) to share state between steps,
- * making this safe for parallel execution.
+ * Step definitions for all Post API operations.
+ * Maps Gherkin steps (Given/When/Then) to Java methods that call PostApiClient.
+ *
+ * WHY one class per resource: Keeps step definitions organised by domain.
+ *   As the test suite grows, each resource's steps stay isolated and maintainable.
+ *
+ * State sharing: Uses ScenarioContext (ThreadLocal) to pass Response between steps.
+ * Each step either stores data (setResponse) or reads it (getResponse) — never both.
  */
 public class PostStepDefinitions {
 
     private static final Logger LOG = LogManager.getLogger(PostStepDefinitions.class);
 
-    private PostApiClient apiClient;
-    private PostRequest postRequest;
-    private Integer createdPostId;
+    private PostApiClient apiClient;        // Domain client — initialized in setup step
+    private PostRequest postRequest;        // Request body — built in preparation steps
+    private Integer createdPostId;          // Stores the ID returned after creation (for E2E flow)
 
-    // Data-driven test data loaded from Excel
+    // Row data loaded from Excel for data-driven tests (key=column header, value=cell value)
     private Map<String, String> testData;
 
     // ── Setup ────────────────────────────────────────────────────────────
 
+    /** Initializes the PostApiClient. Called at the start of every Post scenario. */
     @Given("I set up the post API client")
     public void iSetUpThePostApiClient() {
         apiClient = new PostApiClient();
@@ -44,6 +50,7 @@ public class PostStepDefinitions {
 
     // ── Request Preparation ──────────────────────────────────────────────
 
+    /** Builds a PostRequest POJO from inline Gherkin parameters and stores it in ScenarioContext. */
     @Given("I prepare a post request with title {string} and body {string}")
     public void iPreparePostRequest(String title, String body) {
         postRequest = new PostRequest(title, body, 1);
@@ -51,6 +58,13 @@ public class PostStepDefinitions {
         LOG.info("Prepared request: {}", postRequest);
     }
 
+    /**
+     * Loads test data from an Excel file row and builds a PostRequest from it.
+     * Used for data-driven scenarios: values come from .xlsx instead of Gherkin parameters.
+     * @param filePath  classpath path to Excel file (e.g., "testdata/posts.xlsx")
+     * @param sheetName sheet name (e.g., "CreatePosts")
+     * @param rowIndex  0-based row index (excludes header)
+     */
     @Given("I load post test data from Excel file {string} sheet {string} row {int}")
     public void iLoadPostTestDataFromExcel(String filePath, String sheetName, int rowIndex) {
         testData = ExcelReader.readRow(filePath, sheetName, rowIndex);
@@ -63,12 +77,14 @@ public class PostStepDefinitions {
 
     // ── GET Operations ───────────────────────────────────────────────────
 
+    /** Calls GET /posts and stores the response in ScenarioContext. */
     @When("I send a GET request to fetch all posts")
     public void iSendGetRequestToFetchAllPosts() {
         Response response = apiClient.getPosts();
         ScenarioContext.setResponse(response);
     }
 
+    /** Calls GET /posts/{id} for a specific post. Returns 200 or 404. */
     @When("I send a GET request to fetch post with ID {int}")
     public void iSendGetRequestToFetchPostById(int postId) {
         Response response = apiClient.getPostById(postId);
@@ -77,6 +93,7 @@ public class PostStepDefinitions {
 
     // ── POST Operations ──────────────────────────────────────────────────
 
+    /** Calls POST /posts with the prepared PostRequest body. Expects 201 Created. */
     @When("I send a POST request to create a post")
     public void iSendPostRequestToCreatePost() {
         Response response = apiClient.createPost(postRequest);
@@ -85,6 +102,7 @@ public class PostStepDefinitions {
 
     // ── PUT Operations ───────────────────────────────────────────────────
 
+    /** Calls PUT /posts/{id} — full update replacing all fields. */
     @When("I send a PUT request to update post with ID {int}")
     public void iSendPutRequestToUpdatePost(int postId) {
         Response response = apiClient.updatePost(postId, postRequest);
@@ -93,6 +111,7 @@ public class PostStepDefinitions {
 
     // ── PATCH Operations ─────────────────────────────────────────────────
 
+    /** Calls PATCH /posts/{id} — partial update, only changes provided fields. */
     @When("I send a PATCH request to update post with ID {int}")
     public void iSendPatchRequestToUpdatePost(int postId) {
         Response response = apiClient.patchPost(postId, postRequest);
@@ -101,6 +120,7 @@ public class PostStepDefinitions {
 
     // ── DELETE Operations ────────────────────────────────────────────────
 
+    /** Calls DELETE /posts/{id}. JSONPlaceholder returns 200 with empty body. */
     @When("I send a DELETE request to delete post with ID {int}")
     public void iSendDeleteRequestToDeletePost(int postId) {
         Response response = apiClient.deletePost(postId);
@@ -109,6 +129,7 @@ public class PostStepDefinitions {
 
     // ── Response Assertions ──────────────────────────────────────────────
 
+    /** Deserializes the JSON array response into List<PostResponse> and asserts it's not empty. */
     @And("the response should contain a list of posts")
     public void theResponseShouldContainAListOfPosts() {
         Response response = ScenarioContext.getResponse();
@@ -119,22 +140,26 @@ public class PostStepDefinitions {
         LOG.info("Returned {} posts", posts.size());
     }
 
+    /** Asserts the response JSON contains "id" matching the expected post ID. */
     @And("the response should contain post with ID {int}")
     public void theResponseShouldContainPostWithId(int expectedPostId) {
         ResponseValidator.assertFieldEquals(
                 ScenarioContext.getResponse(), "id", String.valueOf(expectedPostId));
     }
 
+    /** Asserts the "title" field in the response matches the expected string. */
     @And("the response should contain the title {string}")
     public void theResponseShouldContainTheTitle(String expectedTitle) {
         ResponseValidator.assertFieldEquals(ScenarioContext.getResponse(), "title", expectedTitle);
     }
 
+    /** Asserts the "body" field in the response matches the expected string. */
     @And("the response should contain the body {string}")
     public void theResponseShouldContainTheBody(String expectedBody) {
         ResponseValidator.assertFieldEquals(ScenarioContext.getResponse(), "body", expectedBody);
     }
 
+    /** Extracts the created post ID from response and saves it for later steps (e.g., update/delete). */
     @And("I save the created post ID")
     public void iSaveTheCreatedPostId() {
         Response response = ScenarioContext.getResponse();
@@ -146,12 +171,14 @@ public class PostStepDefinitions {
 
     // ── Data-Driven Assertions ───────────────────────────────────────────
 
+    /** Asserts title matches the value loaded from Excel (stored in testData map). */
     @And("the response should contain the title from test data")
     public void theResponseShouldContainTheTitleFromTestData() {
         String expectedTitle = testData.get("title");
         ResponseValidator.assertFieldEquals(ScenarioContext.getResponse(), "title", expectedTitle);
     }
 
+    /** Asserts body matches the value loaded from Excel. */
     @And("the response should contain the body from test data")
     public void theResponseShouldContainTheBodyFromTestData() {
         String expectedBody = testData.get("body");

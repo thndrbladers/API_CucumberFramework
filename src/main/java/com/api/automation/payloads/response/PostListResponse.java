@@ -8,15 +8,29 @@ import io.restassured.response.Response;
 import java.util.List;
 
 /**
- * Helper for deserializing a flat JSON array of posts from JSONPlaceholder.
- * JSONPlaceholder returns GET /posts as a top-level array (not wrapped in an object).
+ * Helper class for deserializing a JSON array of posts.
+ * JSONPlaceholder's GET /posts returns a top-level array [{ ... }, { ... }],
+ * not an object wrapper, so we need TypeReference<List<PostResponse>> to parse it.
+ *
+ * WHY TypeReference: Java's type erasure removes List<PostResponse> at runtime.
+ *   TypeReference preserves the generic type so Jackson knows to deserialize each
+ *   array element as PostResponse, not a plain Map.
+ *
+ * BENEFIT: Gives you a typed List<PostResponse> instead of List<Object>,
+ *   so you can safely call postList.get(0).getTitle() with IDE autocomplete.
+ *
+ * Example:
+ *   List<PostResponse> posts = PostListResponse.fromResponse(response);
+ *   posts.forEach(p -> System.out.println(p.getTitle()));
  */
 public class PostListResponse {
 
+    // Shared ObjectMapper instance for JSON parsing
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
     /**
-     * Deserializes the response body (JSON array) into a list of PostResponse objects.
+     * Parses the response body (raw JSON array) into a typed List<PostResponse>.
+     * Used in step definitions: List<PostResponse> posts = PostListResponse.fromResponse(response);
      */
     public static List<PostResponse> fromResponse(Response response) {
         try {

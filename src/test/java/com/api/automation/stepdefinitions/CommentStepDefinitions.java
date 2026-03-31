@@ -18,17 +18,23 @@ import java.util.List;
 import static org.junit.Assert.*;
 
 /**
- * Step definitions for all Comment API operations (JSONPlaceholder).
+ * Step definitions for all Comment API operations.
+ * Maps Gherkin steps to Java methods that call CommentApiClient.
+ * Shares response data via ScenarioContext (ThreadLocal).
+ *
+ * WHY separate from PostStepDefinitions: Avoids one massive file. Each resource
+ *   has its own steps, making it easy to find, edit, and extend.
  */
 public class CommentStepDefinitions {
 
     private static final Logger LOG = LogManager.getLogger(CommentStepDefinitions.class);
 
-    private CommentApiClient apiClient;
-    private CommentRequest commentRequest;
+    private CommentApiClient apiClient;         // Domain client — initialized in setup step
+    private CommentRequest commentRequest;      // Request body — built in preparation step
 
     // ── Setup ────────────────────────────────────────────────────────────
 
+    /** Initializes the CommentApiClient. Called at the start of every Comment scenario. */
     @Given("I set up the comment API client")
     public void iSetUpTheCommentApiClient() {
         apiClient = new CommentApiClient();
@@ -37,6 +43,7 @@ public class CommentStepDefinitions {
 
     // ── Request Preparation ──────────────────────────────────────────────
 
+    /** Builds a CommentRequest from Gherkin parameters and stores it in ScenarioContext. */
     @Given("I prepare a comment request for post ID {int} with name {string} email {string} and body {string}")
     public void iPrepareCommentRequest(int postId, String name, String email, String body) {
         commentRequest = new CommentRequest(postId, name, email, body);
@@ -46,18 +53,21 @@ public class CommentStepDefinitions {
 
     // ── GET Operations ───────────────────────────────────────────────────
 
+    /** Calls GET /comments and stores response. */
     @When("I send a GET request to fetch all comments")
     public void iSendGetRequestToFetchAllComments() {
         Response response = apiClient.getComments();
         ScenarioContext.setResponse(response);
     }
 
+    /** Calls GET /comments/{id}. Returns 200 or 404. */
     @When("I send a GET request to fetch comment with ID {int}")
     public void iSendGetRequestToFetchCommentById(int commentId) {
         Response response = apiClient.getCommentById(commentId);
         ScenarioContext.setResponse(response);
     }
 
+    /** Calls GET /comments?postId={id} to filter comments by parent post. */
     @When("I send a GET request to fetch comments for post ID {int}")
     public void iSendGetRequestToFetchCommentsByPostId(int postId) {
         Response response = apiClient.getCommentsByPostId(postId);
@@ -66,6 +76,7 @@ public class CommentStepDefinitions {
 
     // ── POST Operations ──────────────────────────────────────────────────
 
+    /** Calls POST /comments with the prepared CommentRequest. Expects 201. */
     @When("I send a POST request to create a comment")
     public void iSendPostRequestToCreateComment() {
         Response response = apiClient.createComment(commentRequest);
@@ -74,6 +85,7 @@ public class CommentStepDefinitions {
 
     // ── DELETE Operations ────────────────────────────────────────────────
 
+    /** Calls DELETE /comments/{id}. Returns 200 with empty body. */
     @When("I send a DELETE request to delete comment with ID {int}")
     public void iSendDeleteRequestToDeleteComment(int commentId) {
         Response response = apiClient.deleteComment(commentId);
@@ -82,6 +94,7 @@ public class CommentStepDefinitions {
 
     // ── Response Assertions ──────────────────────────────────────────────
 
+    /** Parses JSON array response and asserts the comments list is not empty. */
     @And("the response should contain a list of comments")
     public void theResponseShouldContainAListOfComments() {
         Response response = ScenarioContext.getResponse();
@@ -91,12 +104,14 @@ public class CommentStepDefinitions {
         LOG.info("Returned {} comments", comments.size());
     }
 
+    /** Asserts the response JSON "id" field matches the expected comment ID. */
     @And("the response should contain comment with ID {int}")
     public void theResponseShouldContainCommentWithId(int expectedId) {
         ResponseValidator.assertFieldEquals(
                 ScenarioContext.getResponse(), "id", String.valueOf(expectedId));
     }
 
+    /** Iterates all returned comments and asserts every postId matches the expected value. */
     @And("all returned comments should belong to post ID {int}")
     public void allReturnedCommentsShouldBelongToPostId(int expectedPostId) {
         Response response = ScenarioContext.getResponse();
@@ -108,11 +123,13 @@ public class CommentStepDefinitions {
         LOG.info("All {} comments belong to post ID {}", postIds.size(), expectedPostId);
     }
 
+    /** Asserts the "name" field in the response matches expected. */
     @And("the response should contain the comment name {string}")
     public void theResponseShouldContainTheCommentName(String expectedName) {
         ResponseValidator.assertFieldEquals(ScenarioContext.getResponse(), "name", expectedName);
     }
 
+    /** Asserts the "email" field in the response matches expected. */
     @And("the response should contain the comment email {string}")
     public void theResponseShouldContainTheCommentEmail(String expectedEmail) {
         ResponseValidator.assertFieldEquals(ScenarioContext.getResponse(), "email", expectedEmail);

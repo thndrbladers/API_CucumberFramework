@@ -3,20 +3,32 @@ package com.api.automation.payloads.request;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 /**
- * POJO for Post create/update request payload (JSONPlaceholder).
- * JsonInclude.NON_NULL ensures only set fields are serialized —
- * useful for PATCH operations where partial updates are needed.
+ * Request body POJO for creating/updating a Post.
+ * Maps to JSON: { "title": "...", "body": "...", "userId": 1 }
+ *
+ * WHY POJO instead of raw JSON strings: Type-safe, IDE-autocomplete, compile-time checks.
+ *   PostRequest req = new PostRequest("Title", "Body", 1);
+ *   vs. String json = "{\"title\":\"Title\"}"  ← error-prone, no compile check.
+ *
+ * @JsonInclude(NON_NULL) — null fields are excluded from JSON output.
+ *   BENEFIT: Makes PATCH requests work correctly — only set fields are sent.
+ *   Example: new PostRequest(); req.setTitle("New");  → {"title":"New"} (body & userId omitted)
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class PostRequest {
 
-    private String title;
-    private String body;
-    private Integer userId;
+    private String title;       // Post title
+    private String body;        // Post content
+    private Integer userId;     // ID of the user who authored the post
 
+    /** No-arg constructor — required by Jackson for deserialization (JSON → POJO). */
     public PostRequest() {
     }
 
+    /**
+     * Convenience constructor for step definitions to create a request in one line.
+     * Example: new PostRequest("Java Guide", "Intro to Java", 1)
+     */
     public PostRequest(String title, String body, int userId) {
         this.title = title;
         this.body = body;

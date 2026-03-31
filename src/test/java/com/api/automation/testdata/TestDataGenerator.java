@@ -9,25 +9,35 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 /**
- * One-time utility to generate the test data Excel file.
- * Run this class's main method to create src/test/resources/testdata/posts.xlsx.
+ * One-time utility to generate the test data Excel file (posts.xlsx).
+ * Creates two sheets — CreatePosts (5 rows) and UpdatePosts (3 rows) — used
+ * by the data-driven Cucumber scenarios.
  *
- * Usage: Right-click → Run As → Java Application
+ * WHY generate instead of manually creating: Reproducible and version-controlled.
+ *   If the Excel file is deleted or corrupted, re-run this class to recreate it instantly.
+ *
+ * BENEFIT: Test data lives as code (auditable in Git), not as a binary blob
+ *   that's hard to diff. Anyone can see exactly what data the tests use.
+ *
+ * Usage: Right-click → Run As → Java Application (or: mvn exec:java)
  */
 public class TestDataGenerator {
 
     public static void main(String[] args) throws IOException {
+        // Ensure the testdata directory exists
         Path dir = Path.of("src/test/resources/testdata");
         Files.createDirectories(dir);
 
+        // Create a new .xlsx workbook (XSSFWorkbook = OOXML format)
         Workbook workbook = new XSSFWorkbook();
 
-        // ── Sheet: CreatePosts ──────────────────────────────────────────
+        // ── Sheet: CreatePosts — data for POST /posts scenarios ───────
         Sheet createSheet = workbook.createSheet("CreatePosts");
-        Row header = createSheet.createRow(0);
+        Row header = createSheet.createRow(0);     // Row 0 = column headers
         header.createCell(0).setCellValue("title");
         header.createCell(1).setCellValue("body");
 
+        // 2D array — each row becomes one Excel data row
         String[][] createData = {
                 {"Introduction to Java", "Java is a versatile programming language"},
                 {"REST API Best Practices", "Follow these patterns for clean API design"},
@@ -41,9 +51,9 @@ public class TestDataGenerator {
             row.createCell(1).setCellValue(createData[i][1]);
         }
 
-        // ── Sheet: UpdatePosts ──────────────────────────────────────────
+        // ── Sheet: UpdatePosts — data for PUT /posts/{id} scenarios ──
         Sheet updateSheet = workbook.createSheet("UpdatePosts");
-        Row updateHeader = updateSheet.createRow(0);
+        Row updateHeader = updateSheet.createRow(0);   // Row 0 = column headers
         updateHeader.createCell(0).setCellValue("postId");
         updateHeader.createCell(1).setCellValue("title");
         updateHeader.createCell(2).setCellValue("body");
@@ -60,14 +70,14 @@ public class TestDataGenerator {
             row.createCell(2).setCellValue(updateData[i][2]);
         }
 
-        // Auto-size columns
+        // Auto-size all columns in both sheets for readability
         for (Sheet sheet : new Sheet[]{createSheet, updateSheet}) {
             for (int col = 0; col < sheet.getRow(0).getLastCellNum(); col++) {
                 sheet.autoSizeColumn(col);
             }
         }
 
-        // Write to file
+        // Write workbook to disk and close resources
         Path filePath = dir.resolve("posts.xlsx");
         try (FileOutputStream fos = new FileOutputStream(filePath.toFile())) {
             workbook.write(fos);

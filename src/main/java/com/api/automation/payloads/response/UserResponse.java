@@ -3,18 +3,23 @@ package com.api.automation.payloads.response;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 /**
- * POJO for the User response from JSONPlaceholder.
- * Nested objects (address, company) are ignored for simplicity.
+ * Response POJO for a User returned by JSONPlaceholder.
+ * Maps from JSON: { "id": 1, "name": "...", "username": "...", "email": "...", ... }
+ *
+ * @JsonIgnoreProperties(ignoreUnknown=true) — nested objects like "address" and "company"
+ *   are ignored since we only need the top-level scalar fields for testing.
+ *   BENEFIT: Avoids creating Address/Company inner classes when we don't need that data.
+ *   If nested data is needed later, just add the inner class and Jackson maps it automatically.
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class UserResponse {
 
-    private Integer id;
-    private String name;
-    private String username;
-    private String email;
-    private String phone;
-    private String website;
+    private Integer id;         // Server-generated user ID
+    private String name;        // Full name (e.g., "Leanne Graham")
+    private String username;    // Username handle (e.g., "Bret")
+    private String email;       // Email address
+    private String phone;       // Phone number
+    private String website;     // Personal website
 
     public Integer getId() {
         return id;

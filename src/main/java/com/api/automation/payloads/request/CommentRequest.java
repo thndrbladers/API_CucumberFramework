@@ -3,19 +3,28 @@ package com.api.automation.payloads.request;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 /**
- * POJO for Comment create/update request payload (JSONPlaceholder).
+ * Request body POJO for creating/updating a Comment.
+ * Maps to JSON: { "postId": 1, "name": "...", "email": "...", "body": "..." }
+ *
+ * @JsonInclude(NON_NULL) — null fields excluded from serialization.
+ *   BENEFIT: Same as PostRequest — enables partial updates via PATCH.
+ *
+ * WHY: Encapsulates comment data in a typed object. Step definitions build this POJO,
+ *   then CommentApiClient passes it to ApiClient.post() which serializes it to JSON.
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class CommentRequest {
 
-    private Integer postId;
-    private String name;
-    private String email;
-    private String body;
+    private Integer postId;     // ID of the parent post this comment belongs to
+    private String name;        // Commenter display name
+    private String email;       // Commenter email address
+    private String body;        // Comment text content
 
+    /** No-arg constructor — required by Jackson. */
     public CommentRequest() {
     }
 
+    /** Convenience constructor with all required fields. */
     public CommentRequest(int postId, String name, String email, String body) {
         this.postId = postId;
         this.name = name;
